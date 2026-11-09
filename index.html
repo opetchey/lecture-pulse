@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lecture Pulse</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e2e0db; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --ink:#f2f2f4; --muted:#9a9aa2; --line:#333338; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.4 system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { font-size:20px; margin:0 0 4px; } .sub { color:var(--muted); font-size:14px; margin:0 0 20px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px; }
+  h2 { font-size:17px; margin:0 0 12px; }
+  .row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  button { font:inherit; font-weight:600; padding:22px 6px; border-radius:12px; border:2px solid var(--line);
+           background:var(--bg); color:var(--ink); cursor:pointer; transition:transform .08s; touch-action:manipulation; }
+  button:active { transform:scale(.96); }
+  button.on { color:#fff; border-color:transparent; }
+  button:disabled { opacity:.55; }
+  .status { min-height:20px; font-size:13px; color:var(--muted); margin-top:10px; }
+  .err { color:#d64545; }
+</style></head>
+<body><main>
+  <h1>How's the lecture going?</h1>
+  <p class="sub">Anonymous. Tap whenever your answer changes — recent taps count most.</p>
+  <div id="gauges"></div>
+  <p class="status" id="conn">Connecting…</p>
+</main>
+<script type="module">
+import { GAUGES, DEFAULT_ROOM } from "./config.js";
+import { connect, mode } from "./backend.js";
+const COOLDOWN = 4000;
+const room = (new URLSearchParams(location.search).get("r") || DEFAULT_ROOM).replace(/[^\w-]/g, "").slice(0, 40);
+const root = document.getElementById("gauges"), conn = document.getElementById("conn");
+let api = null;
+
+for (const g of GAUGES) {
+  const s = document.createElement("section");
+  s.innerHTML = `<h2>${g.title}</h2><div class="row"></div><div class="status"></div>`;
+  const row = s.querySelector(".row"), st = s.querySelector(".status");
+  const btns = g.labels.map((lab, i) => {
+    const b = document.createElement("button"); b.textContent = lab; b.disabled = true;
+    b.onclick = async () => {
+      btns.forEach(x => { x.classList.remove("on"); x.style.background = ""; x.disabled = true; });
+      b.classList.add("on"); b.style.background = g.colors[i];
+      try { await api.submit(g.key, i - 1); st.textContent = "Sent ✓"; st.className = "status"; }
+      catch (e) { st.textContent = "Couldn't send — try again shortly."; st.className = "status err"; }
+      setTimeout(() => { btns.forEach(x => x.disabled = false); if (st.textContent === "Sent ✓") st.textContent = ""; }, COOLDOWN);
+    };
+    row.appendChild(b); return b;
+  });
+  s.btns = btns; root.appendChild(s);
+}
+
+try {
+  api = await connect(room);
+  document.querySelectorAll("button").forEach(b => b.disabled = false);
+  conn.textContent = mode() === "firebase" ? `Connected · room ${room}` : `Local test mode · room ${room}`;
+} catch (e) {
+  conn.textContent = "Couldn't connect. Check your connection and reload."; conn.className = "status err";
+  console.error(e);
+}
+</script>
+</body></html>

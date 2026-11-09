@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".validate": "$room.length <= 40",
+        "votes": {
+          ".read": true,
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            "u":  { ".validate": "newData.isNumber() && (newData.val() === -1 || newData.val() === 0 || newData.val() === 1)" },
+            "p":  { ".validate": "newData.isNumber() && (newData.val() === -1 || newData.val() === 0 || newData.val() === 1)" },
+            "tu": { ".validate": "newData.val() === now && (!data.exists() || now > data.val() + 3000)" },
+            "tp": { ".validate": "newData.val() === now && (!data.exists() || now > data.val() + 3000)" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lecture Pulse – Presenter</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e2e0db; --needle:#1d1d1f; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --ink:#f2f2f4; --muted:#9a9aa2; --line:#333338; --needle:#f2f2f4; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.4 system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+  .wrap { display:grid; grid-template-columns:1fr 260px; gap:20px; padding:20px; min-height:100vh; }
+  .dials { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-content:center; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 20px; }
+  .card h2 { margin:0; font-size:clamp(18px,2.2vw,30px); text-align:center; }
+  svg.dial { width:100%; height:auto; display:block; }
+  .meta { text-align:center; color:var(--muted); font-size:clamp(12px,1.2vw,16px); font-variant-numeric:tabular-nums; }
+  aside { display:flex; flex-direction:column; gap:14px; }
+  #qr svg { width:100%; height:auto; background:#fff; border-radius:10px; }
+  .url { font-size:13px; word-break:break-all; color:var(--muted); }
+  label { font-size:13px; color:var(--muted); display:block; }
+  input[type=range] { width:100%; }
+  button { font:inherit; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; }
+  .badge { font-size:12px; padding:3px 8px; border-radius:99px; background:#e0a52633; color:#a37310; display:inline-block; }
+  @media (max-width:900px) { .wrap { grid-template-columns:1fr; } .dials { grid-template-columns:1fr; } }
+  /* compact mode: ?mini (for embedding in slides) and the pop-out window */
+  body.mini { background:transparent; min-height:0; overflow:hidden; }
+  body.mini .wrap { display:block; padding:0; min-height:0; }
+  body.mini aside { display:none; }
+  body.mini .dials { grid-template-columns:1fr 1fr; gap:6px; padding:4px; }
+  body.mini .card { padding:4px 6px 2px; border-radius:10px; background:color-mix(in srgb, var(--card) 90%, transparent); }
+  body.mini .card h2 { font-size:13px; }
+  body.mini .meta { font-size:11px; }
+  body.mini svg.dial text { display:none; }
+</style></head>
+<body>
+<div class="wrap">
+  <div class="dials" id="dials"></div>
+  <aside>
+    <div id="mode"></div>
+    <div class="card"><div id="qr"></div><div class="url" id="url"></div></div>
+    <div>
+      <label>Memory (half-weight after <b id="hl"></b>)</label>
+      <input type="range" id="tau" min="20" max="600" step="10" value="120">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="new">New session</button><button id="fs">Full screen</button><button id="hideqr">Hide QR</button><button id="pop" title="Small always-on-top window (Chrome or Edge)">Pop out</button>
+    </div>
+    <div class="url">Needle = weighted average of each student's latest tap. Dots = individual responses, fading as they age. Shaded bands = uncertainty (±1 and ±2 standard errors).</div>
+  </aside>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script type="module">
+import { GAUGES, DEFAULT_ROOM } from "./config.js";
+import { connect, mode, stats } from "./backend.js";
+
+const q = new URLSearchParams(location.search);
+let room = (q.get("r") || DEFAULT_ROOM).replace(/[^\w-]/g, "").slice(0, 40);
+let tau = 120, votes = {}, api = null, unsub = null;
+const M = mode();
+const MINI = q.has("mini");
+if (MINI) document.body.classList.add("mini");
+let pip = null;   // pop-out (Document Picture-in-Picture) window
+
+// ---------- dial drawing ----------
+const CX = 200, CY = 200, R = 160;
+const pt = (v, r) => { const a = v * Math.PI / 2; return [CX + r * Math.sin(a), CY - r * Math.cos(a)]; };
+const arc = (v0, v1, r) => { const [x0, y0] = pt(v0, r), [x1, y1] = pt(v1, r); return `M${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1}`; };
+const wedge = (v0, v1) => { const [x0, y0] = pt(v0, R - 14), [x1, y1] = pt(v1, R - 14);
+  return `M${CX},${CY} L${x0},${y0} A${R - 14},${R - 14} 0 0 1 ${x1},${y1} Z`; };
+
+const dials = GAUGES.map(g => {
+  const el = document.createElement("div"); el.className = "card";
+  const zones = [[-1, -1/3], [-1/3, 1/3], [1/3, 1]].map((z, i) =>
+    `<path d="${arc(z[0] + 0.01, z[1] - 0.01, R)}" stroke="${g.colors[i]}" stroke-width="22" fill="none" stroke-linecap="butt"/>`).join("");
+  const labs = [-0.72, 0, 0.72].map((v, i) => { const [x, y] = pt(v, R + 60);
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="600" fill="currentColor">${g.labels[i]}</text>`; }).join("");
+  el.innerHTML = `<h2>${g.title}</h2>
+    <svg class="dial" viewBox="-50 -38 500 253">
+      ${zones}${labs}
+      <g class="dots"></g>
+      <path class="band2" fill="var(--needle)" opacity=".08"/>
+      <path class="band1" fill="var(--needle)" opacity=".14"/>
+      <line class="needle" x1="${CX}" y1="${CY}" stroke="var(--needle)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="${CX}" cy="${CY}" r="11" fill="var(--needle)"/>
+    </svg><div class="meta">&nbsp;</div>`;
+  document.getElementById("dials").appendChild(el);
+  return { g, needle: el.querySelector(".needle"), b1: el.querySelector(".band1"), b2: el.querySelector(".band2"),
+           meta: el.querySelector(".meta"), dotsG: el.querySelector(".dots"), dots: new Map(), shown: 0, se: 0.7 };
+});
+
+// ---------- one dot per response, just outside the arc, fading with age ----------
+// Each device gets a stable position inside its answer's zone (from a hash of its id), so dots don't jump about.
+function hash01(str, salt) { let h = 2166136261 ^ salt; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10007) / 10007; }
+function drawDots(d, now) {
+  const seen = new Set();
+  for (const [id, v] of Object.entries(votes)) {
+    const x = v[d.g.key], tx = v["t" + d.g.key];
+    if (typeof x !== "number" || typeof tx !== "number") continue;
+    const w = Math.exp(-Math.max(0, now - tx) / 1000 / tau);
+    if (w < 0.01) continue;
+    seen.add(id);
+    let c = d.dots.get(id);
+    if (!c) { c = document.createElementNS("http://www.w3.org/2000/svg", "circle"); c.setAttribute("r", "4.5"); d.dotsG.appendChild(c); d.dots.set(id, c); }
+    if (c._x !== x) {   // place within the zone of the chosen answer
+      c._x = x;
+      const [px, py] = pt(x * 2 / 3 + (hash01(id, 1) - 0.5) * 0.6, R + 17 + hash01(id, 2) * 21);
+      c.setAttribute("cx", px.toFixed(1)); c.setAttribute("cy", py.toFixed(1)); c.setAttribute("fill", d.g.colors[x + 1]);
+    }
+    c.setAttribute("opacity", w.toFixed(3));
+  }
+  for (const [id, c] of d.dots) if (!seen.has(id)) { c.remove(); d.dots.delete(id); }
+}
+
+// compact dials (slide widget, pop-out): crop the SVG to the arc
+const setCompact = on => dials.forEach(d =>
+  d.needle.ownerSVGElement.setAttribute("viewBox", on ? "-2 -2 404 214" : "-50 -38 500 253"));
+if (MINI) setCompact(true);
+
+// ---------- animation: needle = eased weighted mean; bands = ±1 and ±2 SE ----------
+const clamp = v => Math.max(-1, Math.min(1, v));
+let last = performance.now(), lastMeta = 0;
+function gauss() { return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random()); }
+function frame() {
+  const t = performance.now();
+  const dt = Math.max(0, Math.min(0.1, (t - last) / 1000)); last = t;
+  if (M === "demo") simulate(dt);
+  const now = api ? api.now() : Date.now();
+  for (const d of dials) {
+    const s = stats(votes, d.g.key, now, tau);
+    d.shown += (s.m - d.shown) * Math.min(1, dt * 3);    // ease the mean
+    d.se += (s.se - d.se) * Math.min(1, dt * 3);
+    drawDots(d, now);
+    const v = clamp(d.shown);
+    const [x, y] = pt(v, R - 22); d.needle.setAttribute("x2", x); d.needle.setAttribute("y2", y);
+    d.b1.setAttribute("d", wedge(clamp(d.shown - d.se), clamp(d.shown + d.se)));
+    d.b2.setAttribute("d", wedge(clamp(d.shown - 2 * d.se), clamp(d.shown + 2 * d.se)));
+    if (t - lastMeta > 500 && (MINI || pip)) d.meta.textContent = `n = ${s.n}`;
+    else if (t - lastMeta > 500) d.meta.textContent = s.n ? `${s.n} recent response${s.n === 1 ? "" : "s"} · mean ${s.m >= 0 ? "+" : ""}${s.m.toFixed(2)} ± ${s.se.toFixed(2)}` : "Waiting for responses…";
+  }
+  if (t - lastMeta > 500) lastMeta = t;
+  (pip || window).requestAnimationFrame(frame);
+}
+
+// ---------- pop-out: a small always-on-top window that floats over Keynote, PowerPoint, etc. ----------
+const popBtn = document.getElementById("pop");
+if (!("documentPictureInPicture" in window)) { popBtn.disabled = true; popBtn.title = "Pop out needs Chrome or Edge"; }
+popBtn.onclick = async () => {
+  if (pip) { pip.close(); return; }
+  const w = await documentPictureInPicture.requestWindow({ width: 420, height: 190 });
+  document.querySelectorAll("style").forEach(s => w.document.head.appendChild(s.cloneNode(true)));
+  w.document.title = "Lecture Pulse";
+  w.document.body.className = "mini";
+  const dl = document.getElementById("dials");
+  w.document.body.appendChild(dl);
+  pip = w; popBtn.textContent = "Bring back"; setCompact(true);
+  w.addEventListener("pagehide", () => {
+    document.querySelector(".wrap").prepend(dl); pip = null; setCompact(MINI); popBtn.textContent = "Pop out";
+    requestAnimationFrame(frame);
+  });
+};
+
+// ---------- demo: 80 simulated students whose mood drifts ----------
+const sim = Array.from({ length: 80 }, (_, i) => ({ id: "s" + i, bias: gauss() * 0.5, act: 0.02 + Math.random() * 0.06 }));
+let trend = { u: 0.3, p: 0 }, tsim = 0;
+function simulate(dt) {
+  tsim += dt;
+  trend.u = 0.6 * Math.sin(tsim / 25); trend.p = 0.5 * Math.sin(tsim / 40 + 1);
+  for (const s of sim) for (const k of ["u", "p"]) if (Math.random() < s.act * dt) {
+    const x = trend[k] + s.bias * (k === "u" ? 1 : 0.6) + gauss() * 0.5;
+    (votes[s.id] ||= {})[k] = x < -0.4 ? -1 : x > 0.4 ? 1 : 0; votes[s.id]["t" + k] = Date.now();
+  }
+}
+
+// ---------- controls ----------
+function studentURL() { const u = new URL("index.html", location.href); u.search = ""; u.searchParams.set("r", room); if (M === "local") u.searchParams.set("local", ""); return u.href.replace("local=", "local"); }
+function drawQR() {
+  const url = studentURL(); document.getElementById("url").textContent = url;
+  const box = document.getElementById("qr");
+  if (window.qrcode) { const qr = qrcode(0, "M"); qr.addData(url); qr.make(); box.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 3, scalable: true }); }
+  else box.textContent = "(QR library didn't load — share the link below)";
+}
+const tauEl = document.getElementById("tau"), hl = document.getElementById("hl");
+const showTau = () => { tau = +tauEl.value; const h = tau * Math.LN2; hl.textContent = h < 90 ? `${Math.round(h)} s` : `${(h / 60).toFixed(1)} min`; };
+tauEl.oninput = showTau; showTau();
+document.getElementById("fs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+document.getElementById("hideqr").onclick = e => { const c = document.getElementById("qr").parentElement; c.hidden = !c.hidden; e.target.textContent = c.hidden ? "Show QR" : "Hide QR"; };
+document.getElementById("new").onclick = async () => {
+  room = DEFAULT_ROOM + "-" + Math.random().toString(36).slice(2, 6);
+  const u = new URL(location.href); u.searchParams.set("r", room); history.replaceState(null, "", u);
+  votes = {}; dials.forEach(d => { d.dots.forEach(c => c.remove()); d.dots.clear(); }); await start();
+};
+document.getElementById("mode").innerHTML = M === "firebase" ? "" :
+  `<span class="badge">${M === "demo" ? "Demo — simulated class" : "Local test mode — open student page in other tabs"}</span>`;
+
+async function start() {
+  drawQR();
+  if (M === "demo") return;
+  if (unsub) unsub();
+  api = await connect(room);
+  unsub = api.subscribe(v => { votes = v; });
+}
+start().catch(e => { console.error(e); document.getElementById("mode").innerHTML = `<span class="badge">Couldn't connect: ${e.message}</span>`; });
+requestAnimationFrame(frame);
+</script>
+</body></html>

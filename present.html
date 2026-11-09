@@ -180,7 +180,25 @@ function drawQR() {
 }
 const tauEl = document.getElementById("tau"), hl = document.getElementById("hl");
 const showTau = () => { tau = +tauEl.value; const h = tau * Math.LN2; hl.textContent = h < 90 ? `${Math.round(h)} s` : `${(h / 60).toFixed(1)} min`; };
-tauEl.oninput = showTau; showTau();
+tauEl.oninput = () => { showTau(); saveTau(); if (window.opener) window.opener.postMessage({ pulse: "tau", tau }, "*"); };
+
+// ---------- link with a slide deck ----------
+// The deck opens this page with Shift+G. Moving the memory slider here is relayed by the deck to its corner dials
+// (an iframe of this page with ?mini). On opening, this page asks the corner dials for their current setting.
+const okTau = v => typeof v === "number" && v >= 20 && v <= 600;
+function saveTau() { try { localStorage.setItem("pulse-tau", String(tau)); } catch (e) {} }
+try { const v = +localStorage.getItem("pulse-tau"); if (okTau(v)) tauEl.value = v; } catch (e) {}
+showTau();
+addEventListener("message", e => {
+  const d = e.data; if (!d || typeof d !== "object" || !d.pulse) return;
+  if (MINI && e.source === window.parent) {            // corner dials: settings arrive from the deck
+    if (d.pulse === "tau" && okTau(d.tau)) { tauEl.value = d.tau; showTau(); saveTau(); }
+    if (d.pulse === "hello") window.parent.postMessage({ pulse: "tau", tau }, "*");
+  } else if (!MINI && window.opener && e.source === window.opener) {   // control page: reply from the corner dials
+    if (d.pulse === "tau" && okTau(d.tau)) { tauEl.value = d.tau; showTau(); }
+  }
+});
+if (!MINI && window.opener) window.opener.postMessage({ pulse: "hello" }, "*");
 document.getElementById("fs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 document.getElementById("hideqr").onclick = e => { const c = document.getElementById("qr").parentElement; c.hidden = !c.hidden; e.target.textContent = c.hidden ? "Show QR" : "Hide QR"; };
 document.getElementById("new").onclick = async () => {

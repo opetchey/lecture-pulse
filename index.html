@@ -2,6 +2,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lecture Pulse</title>
+<script>/* the bare site address (no room) shows the information page */ if (!location.search) location.replace("about.html");</script>
 <style>
   :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e2e0db; }
   @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --ink:#f2f2f4; --muted:#9a9aa2; --line:#333338; } }
@@ -53,9 +54,9 @@ for (const g of GAUGES) {
 }
 
 try {
-  api = await connect(room);
+  api = await connect(room, { student: true });
   document.querySelectorAll("button").forEach(b => b.disabled = false);
-  conn.textContent = mode() === "firebase" ? `Connected · room ${room}` : `Local test mode · room ${room}`;
+  conn.textContent = mode() === "firebase" ? `Ready · room ${room}` : `Local test mode · room ${room}`;
 } catch (e) {
   conn.textContent = "Couldn't connect. Check your connection and reload."; conn.className = "status err";
   console.error(e);

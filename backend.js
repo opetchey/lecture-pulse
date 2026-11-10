@@ -10,11 +10,13 @@ export function mode() {
   return "firebase";
 }
 
-export async function connect(room) {
-  return mode() === "firebase" ? connectFirebase(room) : connectLocal(room);
+// opts.student: connect to the database only while a tap is being sent, then disconnect.
+// This keeps the number of simultaneous connections low (the free Firebase plan allows about 100 at once).
+export async function connect(room, opts = {}) {
+  return mode() === "firebase" ? connectFirebase(room, opts) : connectLocal(room);
 }
 
-async function connectFirebase(room) {
+async function connectFirebase(room, opts) {
   const [{ initializeApp }, { getAuth, signInAnonymously }, db] = await Promise.all([
     import(FB + "firebase-app.js"), import(FB + "firebase-auth.js"), import(FB + "firebase-database.js"),
   ]);
@@ -23,13 +25,36 @@ async function connectFirebase(room) {
   const cred = await signInAnonymously(auth);
   const uid = cred.user.uid;
   const d = db.getDatabase(app);
+  const write = (key, val) => db.update(db.ref(d, `rooms/${room}/votes/${uid}`),
+    { [key]: val, ["t" + key]: db.serverTimestamp() });
+
+  if (opts.student) {
+    db.goOffline(d);
+    let pending = 0;
+    return {
+      uid,
+      now: () => Date.now(),
+      submit: async (key, val) => {
+        pending++; db.goOnline(d);
+        let timer;
+        try {
+          await Promise.race([write(key, val),
+            new Promise((_, rej) => { timer = setTimeout(() => rej(new Error("timeout")), 10000); })]);
+        } finally {
+          clearTimeout(timer);
+          if (--pending === 0) db.goOffline(d);
+        }
+      },
+      subscribe: () => () => {},
+    };
+  }
+
   let offset = 0;
   db.onValue(db.ref(d, ".info/serverTimeOffset"), s => { offset = s.val() || 0; });
   return {
     uid,
     now: () => Date.now() + offset,
-    submit: (key, val) => db.update(db.ref(d, `rooms/${room}/votes/${uid}`),
-      { [key]: val, ["t" + key]: db.serverTimestamp() }),
+    submit: write,
     subscribe: cb => db.onValue(db.ref(d, `rooms/${room}/votes`), s => cb(s.val() || {})),
   };
 }

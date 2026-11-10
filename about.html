@@ -1,283 +1,779 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lecture Pulse – live, anonymous student feedback</title>
-<meta name="description" content="Students tap their phone; your screen shows how well the room is following and whether the pace is right. Free, anonymous, no login.">
-<style>
-  :root { --bg:#f7f6f2; --card:#fff; --ink:#1d1d1f; --muted:#5f5f66; --line:#e3e1db; --accent:#2e9d5b; --accent-ink:#fff;
-          --amber:#e0a526; --red:#d64545; --code:#f0eee8; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1e1e21; --ink:#f1f1f3; --muted:#a3a3ab; --line:#34343a; --code:#26262a; } }
-  * { box-sizing:border-box; }
-  html { scroll-behavior:smooth; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  a { color:var(--accent); }
-  .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
-  nav { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
-  nav .wrap { display:flex; gap:18px; align-items:center; height:54px; overflow-x:auto; white-space:nowrap; }
-  nav b { margin-right:auto; }
-  nav a { color:var(--ink); text-decoration:none; font-size:15px; opacity:.8; } nav a:hover { opacity:1; }
-  header { padding:64px 0 32px; }
-  h1 { font-size:clamp(34px,6vw,56px); line-height:1.08; margin:0 0 16px; letter-spacing:-.02em; }
-  .lead { font-size:clamp(18px,2.4vw,22px); color:var(--muted); max-width:640px; margin:0 0 28px; }
-  .pills { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
-  .pill { font-size:14px; padding:4px 12px; border-radius:99px; background:var(--card); border:1px solid var(--line); }
-  .btn { display:inline-block; padding:12px 20px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-weight:600; text-decoration:none; border:0; font:inherit; font-weight:600; cursor:pointer; }
-  .btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
-  .btns { display:flex; gap:10px; flex-wrap:wrap; }
-  section { padding:44px 0; border-top:1px solid var(--line); }
-  h2 { font-size:clamp(26px,4vw,34px); margin:0 0 14px; letter-spacing:-.01em; }
-  h3 { font-size:20px; margin:28px 0 8px; }
-  figure { margin:0; }
-  .shot { width:100%; height:auto; border-radius:14px; border:1px solid var(--line); background:#fff; display:block; box-shadow:0 8px 30px rgba(0,0,0,.08); }
-  figcaption { font-size:14px; color:var(--muted); margin-top:8px; }
-  .grid2 { display:grid; grid-template-columns:2fr 1fr; gap:24px; align-items:start; margin-top:24px; }
-  .phone { max-width:300px; margin:0 auto; }
-  .steps { counter-reset:s; list-style:none; padding:0; margin:20px 0 0; display:grid; gap:14px; }
-  .steps > li { counter-increment:s; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px 18px 64px; position:relative; }
-  .steps > li::before { content:counter(s); position:absolute; left:18px; top:16px; width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; }
-  .steps h3 { margin:0 0 6px; font-size:18px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; }
-  label { font-weight:600; display:block; margin-bottom:6px; }
-  input[type=text] { width:100%; font:inherit; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); }
-  .out { display:grid; gap:10px; margin-top:14px; }
-  .row { display:flex; gap:8px; align-items:center; }
-  .row code { flex:1; min-width:0; overflow-x:auto; white-space:nowrap; }
-  .row button { flex:none; font:inherit; font-size:14px; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; }
-  code { font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--code); padding:2px 6px; border-radius:6px; }
-  .row code { padding:9px 10px; }
-  .small { font-size:14px; color:var(--muted); }
-  .features { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:20px; }
-  .features .card h3 { margin:0 0 4px; font-size:17px; }
-  .features .card p { margin:0; font-size:15px; color:var(--muted); }
-  details { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 20px; margin-top:12px; }
-  details summary { cursor:pointer; font-weight:600; }
-  details[open] summary { margin-bottom:8px; }
-  details ol { padding-left:22px; } details li { margin:6px 0; }
-  table { width:100%; border-collapse:collapse; font-size:15px; margin-top:10px; }
-  td, th { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
-  .contact { background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--card)), var(--card)); }
-  footer { padding:32px 0 60px; color:var(--muted); font-size:14px; border-top:1px solid var(--line); }
-  @media (max-width:760px) { .grid2, .features { grid-template-columns:1fr; } header { padding-top:40px; } .steps > li { padding-left:58px; } }
-</style>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lecture Pulse – live, anonymous student feedback</title>
+  <meta name="description"
+    content="Students tap their phone; your screen shows how well the room is following and whether the pace is right. Free, anonymous, no login.">
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --card: #fff;
+      --ink: #1d1d1f;
+      --muted: #5f5f66;
+      --line: #e3e1db;
+      --accent: #2e9d5b;
+      --accent-ink: #fff;
+      --amber: #e0a526;
+      --red: #d64545;
+      --code: #f0eee8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141416;
+        --card: #1e1e21;
+        --ink: #f1f1f3;
+        --muted: #a3a3ab;
+        --line: #34343a;
+        --code: #26262a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    nav .wrap {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      height: 54px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    nav b {
+      margin-right: auto;
+    }
+
+    nav a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 15px;
+      opacity: .8;
+    }
+
+    nav a:hover {
+      opacity: 1;
+    }
+
+    header {
+      padding: 64px 0 32px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 6vw, 56px);
+      line-height: 1.08;
+      margin: 0 0 16px;
+      letter-spacing: -.02em;
+    }
+
+    .lead {
+      font-size: clamp(18px, 2.4vw, 22px);
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 0 28px;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .pill {
+      font-size: 14px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 600;
+      text-decoration: none;
+      border: 0;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    section {
+      padding: 44px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      font-size: clamp(26px, 4vw, 34px);
+      margin: 0 0 14px;
+      letter-spacing: -.01em;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin: 28px 0 8px;
+    }
+
+    figure {
+      margin: 0;
+    }
+
+    .shot {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: block;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .08);
+    }
+
+    figcaption {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      align-items: start;
+      margin-top: 24px;
+    }
+
+    .phone {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .steps {
+      counter-reset: s;
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .steps>li {
+      counter-increment: s;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px 18px 64px;
+      position: relative;
+    }
+
+    .steps>li::before {
+      content: counter(s);
+      position: absolute;
+      left: 18px;
+      top: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .steps h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input[type=text] {
+      width: 100%;
+      font: inherit;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .out {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .row code {
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .row button {
+      flex: none;
+      font: inherit;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    code {
+      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--code);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .row code {
+      padding: 9px 10px;
+    }
+
+    .small {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .features .card h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+    }
+
+    .features .card p {
+      margin: 0;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    details {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-top: 12px;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    details[open] summary {
+      margin-bottom: 8px;
+    }
+
+    details ol {
+      padding-left: 22px;
+    }
+
+    details li {
+      margin: 6px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+
+    td,
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .contact {
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--card)), var(--card));
+    }
+
+    footer {
+      padding: 32px 0 60px;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width:760px) {
+
+      .grid2,
+      .features {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        padding-top: 40px;
+      }
+
+      .steps>li {
+        padding-left: 58px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<nav><div class="wrap">
-  <b>Lecture Pulse</b>
-  <a href="#use">Use it</a><a href="#own">Own copy</a><a href="#how">How it works</a><a href="#faq">FAQ</a><a href="#contact">Contact</a>
-</div></nav>
-
-<header class="wrap">
-  <h1>Know how your lecture is landing, while you're still giving it.</h1>
-  <p class="lead">Students tap their phone. Your screen shows how well the room is following and whether your pace is right, live and anonymously.</p>
-  <div class="pills"><span class="pill">Free</span><span class="pill">Anonymous</span><span class="pill">No app, no login</span><span class="pill">Works with any slides</span></div>
-  <div class="btns">
-    <a class="btn" href="#use">Use it in my lecture</a>
-    <a class="btn ghost" href="present.html?demo" target="_blank" rel="noopener">See a live demo ↗</a>
-  </div>
-</header>
-
-<div class="wrap">
-  <figure>
-    <img class="shot" src="screenshots/presenter.png" alt="Two dials, Understanding and Pace, each with a needle, a shaded uncertainty band and coloured dots for individual responses, next to a QR code">
-    <figcaption>The lecturer's screen, here with a simulated class. Each dot is one student. Recent taps count most, and the grey band shows how certain the average is.</figcaption>
-  </figure>
-</div>
-
-<section id="what"><div class="wrap">
-  <h2>What it does</h2>
-  <p>Many students won't put up a hand to say "I'm lost" or "this is too fast". With Lecture Pulse they can say so with one tap, at any moment, without anyone knowing who tapped.</p>
-  <div class="grid2">
-    <div>
-      <div class="features">
-        <div class="card"><h3>Two questions</h3><p><b>Understanding:</b> Lost / Partly / Got it.<br><b>Pace:</b> Too slow / Just right / Too fast.</p></div>
-        <div class="card"><h3>Recent taps count most</h3><p>Old taps fade away, so the dials follow the room as it changes during the lecture.</p></div>
-        <div class="card"><h3>Honest uncertainty</h3><p>A narrow band means many students agree. A wide band means opinions are split, or only a few people are tapping.</p></div>
-        <div class="card"><h3>One dot per student</h3><p>See the spread of answers, not just the average. Dots fade as they age.</p></div>
-        <div class="card"><h3>Stays out of the way</h3><p>A small window floats over PowerPoint or Keynote, or the dials can sit in a corner of HTML slides.</p></div>
-        <div class="card"><h3>Many lecturers at once</h3><p>Each lecturer uses their own "room", so lectures never mix.</p></div>
-      </div>
+  <nav>
+    <div class="wrap">
+      <b>Lecture Pulse</b>
+      <a href="#use">Use it</a><a href="#own">Own copy</a><a href="#how">How it works</a><a href="#faq">FAQ</a><a
+        href="#contact">Contact</a>
     </div>
-    <figure class="phone">
-      <img class="shot" src="screenshots/student.png" alt="Phone screen with three buttons for Understanding and three for Pace">
-      <figcaption>What students see after scanning the QR code.</figcaption>
+  </nav>
+
+  <header class="wrap">
+    <h1>Know the health of your lecture, while you're still giving it.</h1>
+    <p class="lead">Students tap their phone. Your screen shows how well the room is following and whether your pace is
+      right, live and anonymously.</p>
+    <div class="pills"><span class="pill">Free</span><span class="pill">Anonymous</span><span class="pill">No app, no
+        login</span><span class="pill">Works with any slides</span></div>
+    <div class="btns">
+      <a class="btn" href="#use">Use it in my lecture</a>
+      <a class="btn ghost" href="present.html?demo" target="_blank" rel="noopener">See a live demo ↗</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <figure>
+      <img class="shot" src="screenshots/presenter.png"
+        alt="Two dials, Understanding and Pace, each with a needle, a shaded uncertainty band and coloured dots for individual responses, next to a QR code">
+      <figcaption>The lecturer's screen, here with a simulated class. Each dot is one student. Recent taps count most,
+        and the grey band shows how certain the average is.</figcaption>
     </figure>
   </div>
-  <figure style="margin-top:28px">
-    <img class="shot" src="screenshots/slides.png" alt="A lecture slide with two small dials in the top-right corner">
-    <figcaption>The dials can also sit small in a corner of HTML slides (see the FAQ).</figcaption>
-  </figure>
-</div></section>
 
-<section id="use"><div class="wrap">
-  <h2>Use it in your lecture: three steps, nothing to install</h2>
-  <p>You're welcome to use this copy, for free, as often as you like.</p>
-  <ol class="steps">
-    <li>
-      <h3>Choose a room name</h3>
-      <p>It keeps your students' taps separate from other lectures. Make it unique and a bit hard to guess, e.g. <code>miller-ecology-2027</code>.</p>
-      <div class="card" style="margin-top:12px">
-        <label for="room">Type your room name to get your links:</label>
-        <input type="text" id="room" placeholder="e.g. miller-ecology-2027" autocomplete="off" spellcheck="false">
-        <p class="small" id="roomnote">Letters, numbers and dashes only; anything else is removed.</p>
-        <div class="out" id="links" hidden>
-          <div><b>Your dials</b> (open on the lecture computer and bookmark it):</div>
-          <div class="row"><code id="lPres"></code><button data-copy="lPres">Copy</button><a class="btn" id="aPres" target="_blank" rel="noopener" style="padding:8px 14px;font-size:14px">Open</a></div>
-          <div><b>Students' page</b> (the QR code on your dials already points here):</div>
-          <div class="row"><code id="lStud"></code><button data-copy="lStud">Copy</button></div>
+  <section id="what">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p>Many students won't put up a hand to say "I'm lost" or "this is too fast". With Lecture Pulse they can say so
+        with one tap, at any moment, without anyone knowing who tapped.</p>
+      <div class="grid2">
+        <div>
+          <div class="features">
+            <div class="card">
+              <h3>Two questions</h3>
+              <p><b>Understanding:</b> Lost / Partly / Got it.<br><b>Pace:</b> Too slow / Just right / Too fast.</p>
+            </div>
+            <div class="card">
+              <h3>Recent taps count most</h3>
+              <p>Old taps fade away, so the dials follow the room as it changes during the lecture.</p>
+            </div>
+            <div class="card">
+              <h3>Honest uncertainty</h3>
+              <p>A narrow band means many students agree. A wide band means opinions are split, or only a few people are
+                tapping.</p>
+            </div>
+            <div class="card">
+              <h3>One dot per student</h3>
+              <p>See the spread of answers, not just the average. Dots fade as they age.</p>
+            </div>
+            <div class="card">
+              <h3>Stays out of the way</h3>
+              <p>A small window floats over PowerPoint or Keynote, or the dials can sit in a corner of HTML slides.</p>
+            </div>
+            <div class="card">
+              <h3>Many lecturers at once</h3>
+              <p>Each lecturer uses their own "room", so lectures never mix.</p>
+            </div>
+          </div>
+        </div>
+        <figure class="phone">
+          <img class="shot" src="screenshots/student.png"
+            alt="Phone screen with three buttons for Understanding and three for Pace">
+          <figcaption>What students see after scanning the QR code.</figcaption>
+        </figure>
+      </div>
+      <figure style="margin-top:28px">
+        <img class="shot" src="screenshots/slides.png"
+          alt="A lecture slide with two small dials in the top-right corner">
+        <figcaption>The dials can also sit small in a corner of HTML slides (see the FAQ).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="use">
+    <div class="wrap">
+      <h2>Use it in your lecture: three steps, nothing to install</h2>
+      <p>You're welcome to use this copy, for free, as often as you like.</p>
+      <ol class="steps">
+        <li>
+          <h3>Choose a room name</h3>
+          <p>It keeps your students' taps separate from other lectures. Make it unique and a bit hard to guess, e.g.
+            <code>miller-ecology-2027</code>.</p>
+          <div class="card" style="margin-top:12px">
+            <label for="room">Type your room name to get your links:</label>
+            <input type="text" id="room" placeholder="e.g. miller-ecology-2027" autocomplete="off" spellcheck="false">
+            <p class="small" id="roomnote">Letters, numbers and dashes only; anything else is removed.</p>
+            <div class="out" id="links" hidden>
+              <div><b>Your dials</b> (open on the lecture computer and bookmark it):</div>
+              <div class="row"><code id="lPres"></code><button data-copy="lPres">Copy</button><a class="btn" id="aPres"
+                  target="_blank" rel="noopener" style="padding:8px 14px;font-size:14px">Open</a></div>
+              <div><b>Students' page</b> (the QR code on your dials already points here):</div>
+              <div class="row"><code id="lStud"></code><button data-copy="lStud">Copy</button></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <h3>Open your dials before the lecture</h3>
+          <p>Open your dials link in a web browser on the lecture computer. Chrome or Edge is best. Bookmark it for next
+            time.</p>
+        </li>
+        <li>
+          <h3>Show the QR code</h3>
+          <p>Put the dials page on the projector for a minute. Students scan the QR code with their phone camera and
+            tap. Then click <b>Hide QR</b>, or <b>Pop out</b> for a small window that floats over your slides.</p>
+        </li>
+      </ol>
+      <div class="card" id="slides" style="margin-top:22px">
+        <h3 style="margin-top:0">Using it with PowerPoint, Keynote or a PDF</h3>
+        <p>The best way is the <b>Pop out</b> button. It opens a small window with the two dials that stays on top of
+          your slideshow, whatever program you present with. You don't need to change your slides at all.</p>
+        <ol>
+          <li><b>Before the lecture</b>, open your dials page in <b>Chrome or Edge</b> and click <b>Pop out</b>. (Pop
+            out isn't available in Safari or Firefox.)</li>
+          <li><b>Start your slideshow</b> as usual in PowerPoint, Keynote or your PDF viewer.</li>
+          <li><b>Put the small window where you want it.</b> If the projector is a second screen, drag the window onto
+            the projector screen and into a corner, so students see the dials too. If you'd rather keep them to
+            yourself, leave it on your laptop screen next to the presenter view.</li>
+          <li><b>Keep the original dials tab open</b>, e.g. in the background. Closing it closes the small window too.
+          </li>
+        </ol>
+        <p><b>Keynote on a Mac:</b> if the small window disappears when the slideshow starts, open Keynote's <b>Settings
+            → Slideshow</b> and tick the option that lets other apps (Mission Control and others) use the screen. Then
+          the dials can stay visible on top.</p>
+        <p><b>Why not put the dials inside the slides?</b> A PDF and Keynote can't show anything live. PowerPoint can,
+          through a "Web Viewer" add-in, but it has to be added slide by slide, needs a recent Microsoft 365 version,
+          and add-ins are often blocked on university computers. The pop-out is simpler and more reliable.</p>
+        <p class="small">Projector setups vary, so try it once in the lecture room before your first lecture.</p>
+      </div>
+      <p class="small" style="margin-top:16px"><b>Tip:</b> try it once with your own phone before the first lecture, and
+        tell students: <i>"This is anonymous. Tap whenever you feel lost or I'm going too fast; recent taps count
+          most."</i></p>
+    </div>
+  </section>
+
+  <section id="own">
+    <div class="wrap">
+      <h2>Make your own copy</h2>
+      <p>Want your copy to be completely independent, e.g. for many large lectures or a whole department? Make your own.
+        It takes about 30–45 minutes, with no programming: you create two free accounts and copy-and-paste a few things.
+        Take it slowly; every step is a click or a paste.</p>
+
+      <details>
+        <summary>A. Copy the app on GitHub (5 minutes)</summary>
+        <ol>
+          <li>Create a free account at <a href="https://github.com">github.com</a> if you don't have one, and sign in.
+          </li>
+          <li>Go to <a href="https://github.com/opetchey/lecture-pulse">github.com/opetchey/lecture-pulse</a>.</li>
+          <li>Click <b>Fork</b> (top right), then <b>Create fork</b>. You now have your own copy at
+            <code>github.com/YOUR-NAME/lecture-pulse</code>.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>B. Create the free database on Firebase (15 minutes)</summary>
+        <p>Firebase is a free Google service that passes the taps from phones to your dials.</p>
+        <ol>
+          <li>Go to <a href="https://console.firebase.google.com">console.firebase.google.com</a> and sign in with a
+            Google account.</li>
+          <li>Click <b>Create a project</b> (or <b>Add project</b>). Give it any name, e.g. <code>lecture-pulse</code>.
+            You can switch off Google Analytics. Click through to the end.</li>
+          <li><b>Create the database.</b> In the left menu find <b>Realtime Database</b>. It may be inside a group
+            called <b>Build</b>; if you can't see it, click <b>All products</b>. Click <b>Create database</b>, choose
+            <b>Belgium (europe-west1)</b> or a location near you, choose <b>Start in locked mode</b>, and click
+            <b>Enable</b>.</li>
+          <li><b>Paste the safety rules.</b> Open the <b>Rules</b> tab and delete everything in the box. Open
+            <code>database.rules.json</code> in your GitHub copy, copy all of it and paste it into the box. Click
+            <b>Publish</b>.</li>
+          <li><b>Allow anonymous sign-in.</b> In the left menu find <b>Authentication</b>, and click <b>Get started</b>
+            if you see it. Open the <b>Sign-in method</b> tab, click <b>Anonymous</b>, switch it on, and click
+            <b>Save</b>.</li>
+          <li><b>Get your app's settings.</b> Click the <b>gear icon</b> (top left), then <b>Project settings</b>.
+            Scroll to <b>Your apps</b> and click the <b><code>&lt;/&gt;</code></b> (Web) icon. Type any nickname, leave
+            "Firebase Hosting" unticked, and click <b>Register app</b>. Copy the part of the code from the
+            <code>{</code> after <code>const firebaseConfig =</code> to the matching <code>}</code>.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>C. Put your settings into your copy (5 minutes)</summary>
+        <ol>
+          <li>On GitHub, in your copy, click <code>config.js</code>, then the <b>pencil icon</b> (Edit).</li>
+          <li>Find <code>export const firebaseConfig = {</code>. Replace everything from that <code>{</code> to its
+            matching <code>};</code> with what you copied, and keep <code>export const firebaseConfig =</code> at the
+            start.</li>
+          <li><b>Check that there is a line starting <code>databaseURL:</code>.</b> If it's missing, copy the address at
+            the top of the <b>Data</b> tab in Realtime Database (it ends in <code>firebasedatabase.app</code>) and add
+            it as a line like
+            this:<br><code>databaseURL: "https://your-project-default-rtdb.europe-west1.firebasedatabase.app",</code>
+          </li>
+          <li>Click <b>Commit changes</b>, and then <b>Commit changes</b> again.</li>
+        </ol>
+        <p class="small">GitHub may warn about a "Google API Key" in <code>config.js</code>. That's expected: this key
+          is designed to be public, and your data is protected by the rules you pasted. You can close the alert as
+          "False positive".</p>
+      </details>
+
+      <details>
+        <summary>D. Put your copy online (5 minutes)</summary>
+        <ol>
+          <li>In your GitHub copy, click <b>Settings</b>, then <b>Pages</b>.</li>
+          <li>Under "Branch", choose <b>main</b> and <b>/ (root)</b>, then click <b>Save</b>.</li>
+          <li>Wait a minute and refresh. GitHub shows your address, like
+            <code>https://YOUR-NAME.github.io/lecture-pulse/</code>. That address now shows this page, and the room-name
+            helper above gives links to <i>your</i> copy.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>If something doesn't work</summary>
+        <table>
+          <tr>
+            <th>Message on the page</th>
+            <th>What to do</th>
+          </tr>
+          <tr>
+            <td><code>admin-restricted-operation</code></td>
+            <td>Anonymous sign-in isn't on (step B5)</td>
+          </tr>
+          <tr>
+            <td><code>PERMISSION_DENIED</code>, or taps never arrive</td>
+            <td>The rules weren't published (step B4)</td>
+          </tr>
+          <tr>
+            <td>"Can't determine Firebase Database URL"</td>
+            <td>The <code>databaseURL</code> line is missing (step C3)</td>
+          </tr>
+          <tr>
+            <td>Yellow "Local test mode" badge</td>
+            <td>Your settings aren't in <code>config.js</code> yet (section C)</td>
+          </tr>
+          <tr>
+            <td>Changes don't show up</td>
+            <td>Wait up to 10 minutes, then reload</td>
+          </tr>
+        </table>
+      </details>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p>Each phone counts only through its <b>latest</b> tap per question, scored −1, 0 or +1. A tap made <i>t</i>
+        seconds ago gets weight <i>w</i> = exp(−<i>t</i>/τ). The <b>memory</b> slider on the dials page sets τ; by
+        default a tap has half its weight after about 80 seconds.</p>
+      <table>
+        <tr>
+          <td><b>Needle</b></td>
+          <td>Weighted mean <i>m</i> = Σ<i>wx</i> / (Σ<i>w</i> + 0.5). The small 0.5 pulls gently towards the middle, so
+            the needle drifts back to centre when nobody has tapped for a while.</td>
+        </tr>
+        <tr>
+          <td><b>Shaded bands</b></td>
+          <td>±1 and ±2 standard errors, <i>s</i>/√<i>n</i>ₑ. Here <i>s</i> is the weighted standard deviation and
+            <i>n</i>ₑ = (Σ<i>w</i>)²/Σ<i>w</i>² is the effective number of recent responses.</td>
+        </tr>
+        <tr>
+          <td><b>Dots</b></td>
+          <td>One per phone, placed in its answer's zone. A dot's transparency is its weight <i>w</i>, so it fades as
+            the tap ages.</td>
+        </tr>
+        <tr>
+          <td><b>Fair play</b></td>
+          <td>A phone can tap at most once every few seconds, and only its latest answer counts, so one person can't
+            swing the room.</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <details>
+        <summary>Is it really anonymous? What about data protection?</summary>
+        <p>Yes. Each phone gets a random ID that isn't linked to a name, email address or account. Only the answers
+          (−1/0/+1) and their times are stored, by Google Firebase in the EU (Belgium). Nothing else is collected.</p>
+      </details>
+      <details>
+        <summary>Does it cost anything?</summary>
+        <p>No. It runs on Firebase's free plan, with no payment card. Phones connect only for the moment they send a
+          tap, so hundreds of students can use it at once.</p>
+      </details>
+      <details>
+        <summary>Can several lecturers use it at the same time?</summary>
+        <p>Yes. Each room is completely separate. Just choose a room name that nobody else is likely to pick.</p>
+      </details>
+      <details>
+        <summary>Can I keep the dials visible while I show my slides?</summary>
+        <p>Yes. On the dials page, click <b>Pop out</b> (in Chrome or Edge). This opens a small window that stays on top
+          of PowerPoint, Keynote, a PDF or anything else. See <a href="#slides">Using it with PowerPoint, Keynote or a
+            PDF</a> for step-by-step instructions.</p>
+      </details>
+      <details>
+        <summary>Can the dials go directly into my PowerPoint, Keynote or PDF slides?</summary>
+        <p>Not really, and you don't need them to: the pop-out window does the job better. A PDF and Keynote can't show
+          live content. PowerPoint can, with a "Web Viewer" add-in, but only slide by slide, and add-ins are often
+          blocked on university computers. <a href="#slides">How to use the pop-out</a>.</p>
+      </details>
+      <details>
+        <summary>I make my slides as HTML. Can the dials go in a corner of every slide?</summary>
+        <p>Yes. Add this line just before <code>&lt;/body&gt;</code> in the version of the deck you present from, with
+          your own room name:</p>
+        <div class="row"><code
+            id="lWidget">&lt;script src="https://opetchey.github.io/lecture-pulse/pulse-widget.js" data-room="your-room-name"&gt;&lt;/script&gt;</code><button
+            data-copy="lWidget">Copy</button></div>
+        <p>Press <b>G</b> during the lecture to hide or show them.</p>
+      </details>
+      <details>
+        <summary>What does "New session" do?</summary>
+        <p>It starts an empty room with a new name and a new QR code. You rarely need it, because old taps fade away by
+          themselves.</p>
+      </details>
+      <details>
+        <summary>Can I change the questions or the wording?</summary>
+        <p>Yes, in your own copy: edit the <code>GAUGES</code> part of <code>config.js</code> on GitHub (pencil icon)
+          and commit.</p>
+      </details>
+      <details>
+        <summary>Can I try it without students?</summary>
+        <p>Yes. Open the <a href="present.html?demo" target="_blank" rel="noopener">demo</a> for a simulated class of
+          80. Or open your dials and tap from your own phone.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="card contact">
+        <h2>Like it? Please tell me!</h2>
+        <p>If you use Lecture Pulse, I'd love to hear from you, even just one line saying which course you used it in.
+          Ideas and complaints are welcome too.</p>
+        <p>If so many people use it that it strains the free plan, that's a problem I'd be delighted to have. So please
+          don't hold back.</p>
+        <p><b>Owen Petchey</b>, University of Zurich</p>
+        <div class="btns"><a class="btn" href="https://www.ieu.uzh.ch/en/staff/member/petchey_owen.html" target="_blank"
+            rel="noopener">My university web page ↗</a><a class="btn ghost"
+            href="https://www.linkedin.com/in/owen-petchey-a31104120/" target="_blank" rel="noopener">LinkedIn ↗</a>
         </div>
       </div>
-    </li>
-    <li>
-      <h3>Open your dials before the lecture</h3>
-      <p>Open your dials link in a web browser on the lecture computer. Chrome or Edge is best. Bookmark it for next time.</p>
-    </li>
-    <li>
-      <h3>Show the QR code</h3>
-      <p>Put the dials page on the projector for a minute. Students scan the QR code with their phone camera and tap. Then click <b>Hide QR</b>, or <b>Pop out</b> for a small window that floats over your slides.</p>
-    </li>
-  </ol>
-  <div class="card" id="slides" style="margin-top:22px">
-    <h3 style="margin-top:0">Using it with PowerPoint, Keynote or a PDF</h3>
-    <p>The best way is the <b>Pop out</b> button. It opens a small window with the two dials that stays on top of your slideshow, whatever program you present with. You don't need to change your slides at all.</p>
-    <ol>
-      <li><b>Before the lecture</b>, open your dials page in <b>Chrome or Edge</b> and click <b>Pop out</b>. (Pop out isn't available in Safari or Firefox.)</li>
-      <li><b>Start your slideshow</b> as usual in PowerPoint, Keynote or your PDF viewer.</li>
-      <li><b>Put the small window where you want it.</b> If the projector is a second screen, drag the window onto the projector screen and into a corner, so students see the dials too. If you'd rather keep them to yourself, leave it on your laptop screen next to the presenter view.</li>
-      <li><b>Keep the original dials tab open</b>, e.g. in the background. Closing it closes the small window too.</li>
-    </ol>
-    <p><b>Keynote on a Mac:</b> if the small window disappears when the slideshow starts, open Keynote's <b>Settings → Slideshow</b> and tick the option that lets other apps (Mission Control and others) use the screen. Then the dials can stay visible on top.</p>
-    <p><b>Why not put the dials inside the slides?</b> A PDF and Keynote can't show anything live. PowerPoint can, through a "Web Viewer" add-in, but it has to be added slide by slide, needs a recent Microsoft 365 version, and add-ins are often blocked on university computers. The pop-out is simpler and more reliable.</p>
-    <p class="small">Projector setups vary, so try it once in the lecture room before your first lecture.</p>
-  </div>
-  <p class="small" style="margin-top:16px"><b>Tip:</b> try it once with your own phone before the first lecture, and tell students: <i>"This is anonymous. Tap whenever you feel lost or I'm going too fast; recent taps count most."</i></p>
-</div></section>
+    </div>
+  </section>
 
-<section id="own"><div class="wrap">
-  <h2>Make your own copy</h2>
-  <p>Want your copy to be completely independent, e.g. for many large lectures or a whole department? Make your own. It takes about 30–45 minutes, with no programming: you create two free accounts and copy-and-paste a few things. Take it slowly; every step is a click or a paste.</p>
+  <footer>
+    <div class="wrap">
+      Lecture Pulse was made for BIO144 <i>Data Analysis in Biology</i> at the University of Zurich. Source code: <a
+        href="https://github.com/opetchey/lecture-pulse">github.com/opetchey/lecture-pulse</a>.
+    </div>
+  </footer>
 
-  <details><summary>A. Copy the app on GitHub (5 minutes)</summary>
-    <ol>
-      <li>Create a free account at <a href="https://github.com">github.com</a> if you don't have one, and sign in.</li>
-      <li>Go to <a href="https://github.com/opetchey/lecture-pulse">github.com/opetchey/lecture-pulse</a>.</li>
-      <li>Click <b>Fork</b> (top right), then <b>Create fork</b>. You now have your own copy at <code>github.com/YOUR-NAME/lecture-pulse</code>.</li>
-    </ol>
-  </details>
+  <script>
+    // Room-name helper: builds links for whichever copy of the site this page is served from.
+    const base = new URL(".", location.href).href;
+    const ws = document.getElementById("lWidget");
+    ws.textContent = ws.textContent.replace("https://opetchey.github.io/lecture-pulse/", base);
+    const room = document.getElementById("room"), links = document.getElementById("links");
+    function update() {
+      const r = room.value.trim().replace(/\s+/g, "-").replace(/[^\w-]/g, "").slice(0, 40);
+      links.hidden = !r;
+      if (!r) return;
+      const pres = base + "present.html?r=" + r, stud = base + "index.html?r=" + r;
+      document.getElementById("lPres").textContent = pres;
+      document.getElementById("aPres").href = pres;
+      document.getElementById("lStud").textContent = stud;
+      ws.textContent = `<script src="${base}pulse-widget.js" data-room="${r}"><\/script>`;
+    }
+    room.addEventListener("input", update);
+    document.addEventListener("click", async e => {
+      const id = e.target.dataset && e.target.dataset.copy; if (!id) return;
+      const text = document.getElementById(id).textContent;
+      try {await navigator.clipboard.writeText(text); e.target.textContent = "Copied ✓";}
+      catch {const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents(document.getElementById(id)); sel.removeAllRanges(); sel.addRange(rg); e.target.textContent = "Press Cmd/Ctrl+C";}
+      setTimeout(() => e.target.textContent = "Copy", 1800);
+    });
+  </script>
+</body>
 
-  <details><summary>B. Create the free database on Firebase (15 minutes)</summary>
-    <p>Firebase is a free Google service that passes the taps from phones to your dials.</p>
-    <ol>
-      <li>Go to <a href="https://console.firebase.google.com">console.firebase.google.com</a> and sign in with a Google account.</li>
-      <li>Click <b>Create a project</b> (or <b>Add project</b>). Give it any name, e.g. <code>lecture-pulse</code>. You can switch off Google Analytics. Click through to the end.</li>
-      <li><b>Create the database.</b> In the left menu find <b>Realtime Database</b>. It may be inside a group called <b>Build</b>; if you can't see it, click <b>All products</b>. Click <b>Create database</b>, choose <b>Belgium (europe-west1)</b> or a location near you, choose <b>Start in locked mode</b>, and click <b>Enable</b>.</li>
-      <li><b>Paste the safety rules.</b> Open the <b>Rules</b> tab and delete everything in the box. Open <code>database.rules.json</code> in your GitHub copy, copy all of it and paste it into the box. Click <b>Publish</b>.</li>
-      <li><b>Allow anonymous sign-in.</b> In the left menu find <b>Authentication</b>, and click <b>Get started</b> if you see it. Open the <b>Sign-in method</b> tab, click <b>Anonymous</b>, switch it on, and click <b>Save</b>.</li>
-      <li><b>Get your app's settings.</b> Click the <b>gear icon</b> (top left), then <b>Project settings</b>. Scroll to <b>Your apps</b> and click the <b><code>&lt;/&gt;</code></b> (Web) icon. Type any nickname, leave "Firebase Hosting" unticked, and click <b>Register app</b>. Copy the part of the code from the <code>{</code> after <code>const firebaseConfig =</code> to the matching <code>}</code>.</li>
-    </ol>
-  </details>
-
-  <details><summary>C. Put your settings into your copy (5 minutes)</summary>
-    <ol>
-      <li>On GitHub, in your copy, click <code>config.js</code>, then the <b>pencil icon</b> (Edit).</li>
-      <li>Find <code>export const firebaseConfig = {</code>. Replace everything from that <code>{</code> to its matching <code>};</code> with what you copied, and keep <code>export const firebaseConfig =</code> at the start.</li>
-      <li><b>Check that there is a line starting <code>databaseURL:</code>.</b> If it's missing, copy the address at the top of the <b>Data</b> tab in Realtime Database (it ends in <code>firebasedatabase.app</code>) and add it as a line like this:<br><code>databaseURL: "https://your-project-default-rtdb.europe-west1.firebasedatabase.app",</code></li>
-      <li>Click <b>Commit changes</b>, and then <b>Commit changes</b> again.</li>
-    </ol>
-    <p class="small">GitHub may warn about a "Google API Key" in <code>config.js</code>. That's expected: this key is designed to be public, and your data is protected by the rules you pasted. You can close the alert as "False positive".</p>
-  </details>
-
-  <details><summary>D. Put your copy online (5 minutes)</summary>
-    <ol>
-      <li>In your GitHub copy, click <b>Settings</b>, then <b>Pages</b>.</li>
-      <li>Under "Branch", choose <b>main</b> and <b>/ (root)</b>, then click <b>Save</b>.</li>
-      <li>Wait a minute and refresh. GitHub shows your address, like <code>https://YOUR-NAME.github.io/lecture-pulse/</code>. That address now shows this page, and the room-name helper above gives links to <i>your</i> copy.</li>
-    </ol>
-  </details>
-
-  <details><summary>If something doesn't work</summary>
-    <table>
-      <tr><th>Message on the page</th><th>What to do</th></tr>
-      <tr><td><code>admin-restricted-operation</code></td><td>Anonymous sign-in isn't on (step B5)</td></tr>
-      <tr><td><code>PERMISSION_DENIED</code>, or taps never arrive</td><td>The rules weren't published (step B4)</td></tr>
-      <tr><td>"Can't determine Firebase Database URL"</td><td>The <code>databaseURL</code> line is missing (step C3)</td></tr>
-      <tr><td>Yellow "Local test mode" badge</td><td>Your settings aren't in <code>config.js</code> yet (section C)</td></tr>
-      <tr><td>Changes don't show up</td><td>Wait up to 10 minutes, then reload</td></tr>
-    </table>
-  </details>
-</div></section>
-
-<section id="how"><div class="wrap">
-  <h2>How it works</h2>
-  <p>Each phone counts only through its <b>latest</b> tap per question, scored −1, 0 or +1. A tap made <i>t</i> seconds ago gets weight <i>w</i> = exp(−<i>t</i>/τ). The <b>memory</b> slider on the dials page sets τ; by default a tap has half its weight after about 80 seconds.</p>
-  <table>
-    <tr><td><b>Needle</b></td><td>Weighted mean <i>m</i> = Σ<i>wx</i> / (Σ<i>w</i> + 0.5). The small 0.5 pulls gently towards the middle, so the needle drifts back to centre when nobody has tapped for a while.</td></tr>
-    <tr><td><b>Shaded bands</b></td><td>±1 and ±2 standard errors, <i>s</i>/√<i>n</i>ₑ. Here <i>s</i> is the weighted standard deviation and <i>n</i>ₑ = (Σ<i>w</i>)²/Σ<i>w</i>² is the effective number of recent responses.</td></tr>
-    <tr><td><b>Dots</b></td><td>One per phone, placed in its answer's zone. A dot's transparency is its weight <i>w</i>, so it fades as the tap ages.</td></tr>
-    <tr><td><b>Fair play</b></td><td>A phone can tap at most once every few seconds, and only its latest answer counts, so one person can't swing the room.</td></tr>
-  </table>
-</div></section>
-
-<section id="faq"><div class="wrap">
-  <h2>Questions</h2>
-  <details><summary>Is it really anonymous? What about data protection?</summary>
-    <p>Yes. Each phone gets a random ID that isn't linked to a name, email address or account. Only the answers (−1/0/+1) and their times are stored, by Google Firebase in the EU (Belgium). Nothing else is collected.</p></details>
-  <details><summary>Does it cost anything?</summary>
-    <p>No. It runs on Firebase's free plan, with no payment card. Phones connect only for the moment they send a tap, so hundreds of students can use it at once.</p></details>
-  <details><summary>Can several lecturers use it at the same time?</summary>
-    <p>Yes. Each room is completely separate. Just choose a room name that nobody else is likely to pick.</p></details>
-  <details><summary>Can I keep the dials visible while I show my slides?</summary>
-    <p>Yes. On the dials page, click <b>Pop out</b> (in Chrome or Edge). This opens a small window that stays on top of PowerPoint, Keynote, a PDF or anything else. See <a href="#slides">Using it with PowerPoint, Keynote or a PDF</a> for step-by-step instructions.</p></details>
-  <details><summary>Can the dials go directly into my PowerPoint, Keynote or PDF slides?</summary>
-    <p>Not really, and you don't need them to: the pop-out window does the job better. A PDF and Keynote can't show live content. PowerPoint can, with a "Web Viewer" add-in, but only slide by slide, and add-ins are often blocked on university computers. <a href="#slides">How to use the pop-out</a>.</p></details>
-  <details><summary>I make my slides as HTML. Can the dials go in a corner of every slide?</summary>
-    <p>Yes. Add this line just before <code>&lt;/body&gt;</code> in the version of the deck you present from, with your own room name:</p>
-    <div class="row"><code id="lWidget">&lt;script src="https://opetchey.github.io/lecture-pulse/pulse-widget.js" data-room="your-room-name"&gt;&lt;/script&gt;</code><button data-copy="lWidget">Copy</button></div>
-    <p>Press <b>G</b> during the lecture to hide or show them.</p></details>
-  <details><summary>What does "New session" do?</summary>
-    <p>It starts an empty room with a new name and a new QR code. You rarely need it, because old taps fade away by themselves.</p></details>
-  <details><summary>Can I change the questions or the wording?</summary>
-    <p>Yes, in your own copy: edit the <code>GAUGES</code> part of <code>config.js</code> on GitHub (pencil icon) and commit.</p></details>
-  <details><summary>Can I try it without students?</summary>
-    <p>Yes. Open the <a href="present.html?demo" target="_blank" rel="noopener">demo</a> for a simulated class of 80. Or open your dials and tap from your own phone.</p></details>
-</div></section>
-
-<section id="contact"><div class="wrap">
-  <div class="card contact">
-    <h2>Like it? Please tell me!</h2>
-    <p>If you use Lecture Pulse, I'd love to hear from you, even just one line saying which course you used it in. Ideas and complaints are welcome too.</p>
-    <p>If so many people use it that it strains the free plan, that's a problem I'd be delighted to have. So please don't hold back.</p>
-    <p><b>Owen Petchey</b>, University of Zurich</p>
-    <div class="btns"><a class="btn" href="https://www.ieu.uzh.ch/en/staff/member/petchey_owen.html" target="_blank" rel="noopener">My university web page ↗</a><a class="btn ghost" href="https://www.linkedin.com/in/owen-petchey-a31104120/" target="_blank" rel="noopener">LinkedIn ↗</a></div>
-  </div>
-</div></section>
-
-<footer><div class="wrap">
-  Lecture Pulse was made for BIO144 <i>Data Analysis in Biology</i> at the University of Zurich. Source code: <a href="https://github.com/opetchey/lecture-pulse">github.com/opetchey/lecture-pulse</a>.
-</div></footer>
-
-<script>
-  // Room-name helper: builds links for whichever copy of the site this page is served from.
-  const base = new URL(".", location.href).href;
-  const ws = document.getElementById("lWidget");
-  ws.textContent = ws.textContent.replace("https://opetchey.github.io/lecture-pulse/", base);
-  const room = document.getElementById("room"), links = document.getElementById("links");
-  function update() {
-    const r = room.value.trim().replace(/\s+/g, "-").replace(/[^\w-]/g, "").slice(0, 40);
-    links.hidden = !r;
-    if (!r) return;
-    const pres = base + "present.html?r=" + r, stud = base + "index.html?r=" + r;
-    document.getElementById("lPres").textContent = pres;
-    document.getElementById("aPres").href = pres;
-    document.getElementById("lStud").textContent = stud;
-    ws.textContent = `<script src="${base}pulse-widget.js" data-room="${r}"><\/script>`;
-  }
-  room.addEventListener("input", update);
-  document.addEventListener("click", async e => {
-    const id = e.target.dataset && e.target.dataset.copy; if (!id) return;
-    const text = document.getElementById(id).textContent;
-    try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied ✓"; }
-    catch { const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents(document.getElementById(id)); sel.removeAllRanges(); sel.addRange(rg); e.target.textContent = "Press Cmd/Ctrl+C"; }
-    setTimeout(() => e.target.textContent = "Copy", 1800);
-  });
-</script>
-</body></html>
+</html>

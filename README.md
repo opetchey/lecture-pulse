@@ -51,7 +51,7 @@ Before your first lecture, try it once with your own phone. Tap a button and wat
 
 ### Optional extras
 
-- **A small window that floats over your slides.** In Chrome or Edge, click **Pop out** on the dials page. This opens a small window that stays on top of PowerPoint, Keynote, a PDF or anything else. Drag it to a corner. Leave the original browser tab open in the background.
+- **A small window that floats over your slides (best for PowerPoint, Keynote or a PDF).** In Chrome or Edge, click **Pop out** on the dials page. This opens a small window that stays on top of your slideshow. If the projector is a second screen, drag the window onto it and into a corner. Leave the original browser tab open in the background. On a Mac with Keynote: if the window disappears during the slideshow, open Keynote's Settings → Slideshow and allow other apps to use the screen. This works better than trying to put the dials inside the slides: PDFs and Keynote can't show live content, and PowerPoint's Web Viewer add-in is fiddly and often blocked on university computers.
 - **Memory slider.** This sets how quickly old taps fade. The default is about 1½ minutes. Move it right if your students tap rarely, and left for a quicker response.
 - **Hide QR** once everyone has scanned it, and **Full screen** for the projector.
 - **New session** starts again with an empty room and a new QR code. You rarely need it, because old taps fade away by themselves.

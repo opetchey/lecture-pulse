@@ -136,6 +136,19 @@
       <p>Put the dials page on the projector for a minute. Students scan the QR code with their phone camera and tap. Then click <b>Hide QR</b>, or <b>Pop out</b> for a small window that floats over your slides.</p>
     </li>
   </ol>
+  <div class="card" id="slides" style="margin-top:22px">
+    <h3 style="margin-top:0">Using it with PowerPoint, Keynote or a PDF</h3>
+    <p>The best way is the <b>Pop out</b> button. It opens a small window with the two dials that stays on top of your slideshow, whatever program you present with. You don't need to change your slides at all.</p>
+    <ol>
+      <li><b>Before the lecture</b>, open your dials page in <b>Chrome or Edge</b> and click <b>Pop out</b>. (Pop out isn't available in Safari or Firefox.)</li>
+      <li><b>Start your slideshow</b> as usual in PowerPoint, Keynote or your PDF viewer.</li>
+      <li><b>Put the small window where you want it.</b> If the projector is a second screen, drag the window onto the projector screen and into a corner, so students see the dials too. If you'd rather keep them to yourself, leave it on your laptop screen next to the presenter view.</li>
+      <li><b>Keep the original dials tab open</b>, e.g. in the background. Closing it closes the small window too.</li>
+    </ol>
+    <p><b>Keynote on a Mac:</b> if the small window disappears when the slideshow starts, open Keynote's <b>Settings → Slideshow</b> and tick the option that lets other apps (Mission Control and others) use the screen. Then the dials can stay visible on top.</p>
+    <p><b>Why not put the dials inside the slides?</b> A PDF and Keynote can't show anything live. PowerPoint can, through a "Web Viewer" add-in, but it has to be added slide by slide, needs a recent Microsoft 365 version, and add-ins are often blocked on university computers. The pop-out is simpler and more reliable.</p>
+    <p class="small">Projector setups vary, so try it once in the lecture room before your first lecture.</p>
+  </div>
   <p class="small" style="margin-top:16px"><b>Tip:</b> try it once with your own phone before the first lecture, and tell students: <i>"This is anonymous. Tap whenever you feel lost or I'm going too fast; recent taps count most."</i></p>
 </div></section>
 
@@ -213,7 +226,9 @@
   <details><summary>Can several lecturers use it at the same time?</summary>
     <p>Yes. Each room is completely separate. Just choose a room name that nobody else is likely to pick.</p></details>
   <details><summary>Can I keep the dials visible while I show my slides?</summary>
-    <p>Yes. On the dials page, click <b>Pop out</b> (in Chrome or Edge). This opens a small window that stays on top of PowerPoint, Keynote, a PDF or anything else. Keep the original tab open in the background.</p></details>
+    <p>Yes. On the dials page, click <b>Pop out</b> (in Chrome or Edge). This opens a small window that stays on top of PowerPoint, Keynote, a PDF or anything else. See <a href="#slides">Using it with PowerPoint, Keynote or a PDF</a> for step-by-step instructions.</p></details>
+  <details><summary>Can the dials go directly into my PowerPoint, Keynote or PDF slides?</summary>
+    <p>Not really, and you don't need them to: the pop-out window does the job better. A PDF and Keynote can't show live content. PowerPoint can, with a "Web Viewer" add-in, but only slide by slide, and add-ins are often blocked on university computers. <a href="#slides">How to use the pop-out</a>.</p></details>
   <details><summary>I make my slides as HTML. Can the dials go in a corner of every slide?</summary>
     <p>Yes. Add this line just before <code>&lt;/body&gt;</code> in the version of the deck you present from, with your own room name:</p>
     <div class="row"><code id="lWidget">&lt;script src="https://opetchey.github.io/lecture-pulse/pulse-widget.js" data-room="your-room-name"&gt;&lt;/script&gt;</code><button data-copy="lWidget">Copy</button></div>
